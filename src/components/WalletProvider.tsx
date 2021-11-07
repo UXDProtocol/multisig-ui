@@ -9,9 +9,10 @@ import { useSelector } from "react-redux";
 import { Connection, ConfirmOptions } from "@solana/web3.js";
 // @ts-ignore
 import Wallet from "@project-serum/sol-wallet-adapter";
-import { Program, Provider } from "@project-serum/anchor";
+import { Program, Provider, web3 } from "@project-serum/anchor";
 import { State as StoreState } from "../store/reducer";
 import MultisigIdl from "../idl";
+import idoIdl from "../idl/idoIdl";
 
 export function useWallet(): WalletContextValues {
   const w = useContext(WalletContext);
@@ -27,6 +28,7 @@ const WalletContext = React.createContext<null | WalletContextValues>(null);
 type WalletContextValues = {
   wallet: Wallet;
   multisigClient: Program;
+  idoClient: Program
 };
 
 export default function WalletProvider(
@@ -39,7 +41,7 @@ export default function WalletProvider(
     };
   });
 
-  const { wallet, multisigClient } = useMemo(() => {
+  const { wallet, multisigClient, idoClient } = useMemo(() => {
     const opts: ConfirmOptions = {
       preflightCommitment: "recent",
       commitment: "recent",
@@ -54,14 +56,23 @@ export default function WalletProvider(
       provider
     );
 
+    const UXDIDOProgramAdress = new web3.PublicKey("UXDJHLPFr8qjLqZs8ejW24zFTq174g1wQHQ4LFhTXxz");
+
+    const idoClient = new Program(
+      idoIdl,
+      UXDIDOProgramAdress,
+      provider
+    )
+
     return {
       wallet,
       multisigClient,
+      idoClient
     };
   }, [walletProvider, network]);
 
   return (
-    <WalletContext.Provider value={{ wallet, multisigClient }}>
+    <WalletContext.Provider value={{ wallet, multisigClient, idoClient }}>
       {props.children}
     </WalletContext.Provider>
   );
